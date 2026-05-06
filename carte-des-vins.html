@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carte des Vins — Gama Wines</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bordeaux: #6B1A2A;
+    --bordeaux-dark: #4A0F1B;
+    --bordeaux-light: #8B2A3E;
+    --gold: #A8895A;
+    --gold-light: #C9A96E;
+    --cream: #FAF7F2;
+    --ivory: #F2EDE4;
+    --text-dark: #1A1208;
+    --text-mid: #4A3728;
+    --text-light: #7A6355;
+    --border: rgba(168,137,90,0.25);
+  }
+
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Montserrat', sans-serif; background: var(--cream); color: var(--text-dark); overflow-x: hidden; }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(250,247,242,0.96); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 4rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 72px;
+  }
+  .nav-logo { display: flex; align-items: center; gap: 14px; text-decoration: none; }
+  .nav-logo-text { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 400; color: var(--bordeaux-dark); letter-spacing: 0.08em; }
+  .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+  .nav-links a { font-size: 11px; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-mid); text-decoration: none; transition: color 0.3s; }
+  .nav-links a:hover, .nav-links a.active { color: var(--bordeaux); }
+  .nav-cta { color: var(--cream) !important; background: var(--bordeaux); padding: 10px 24px; border-radius: 2px; }
+
+  /* HERO */
+  .page-hero {
+    background: linear-gradient(160deg, var(--bordeaux-dark) 0%, var(--bordeaux) 60%, #8B3A50 100%);
+    padding: 7rem 4rem 4rem;
+    text-align: center;
+    position: relative; overflow: hidden;
+  }
+  .page-hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 80%, rgba(168,137,90,0.12) 0%, transparent 60%);
+  }
+  .hero-tag { display: inline-flex; align-items: center; gap: 10px; font-size: 10px; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold-light); margin-bottom: 1.25rem; }
+  .hero-tag::before, .hero-tag::after { content: ''; display: block; width: 40px; height: 1px; background: var(--gold); }
+  .page-hero h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.5rem, 5vw, 4.5rem); font-weight: 300; color: var(--cream); line-height: 1.1; margin-bottom: 1rem; }
+  .page-hero h1 em { font-style: italic; color: var(--gold-light); }
+  .page-hero p { font-size: 14px; font-weight: 300; color: rgba(250,247,242,0.65); letter-spacing: 0.04em; }
+
+  /* LAYOUT */
+  .wine-layout {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    min-height: calc(100vh - 200px);
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    background: var(--ivory);
+    border-right: 1px solid var(--border);
+    padding: 2rem 0;
+    position: sticky; top: 72px;
+    height: calc(100vh - 72px);
+    overflow-y: auto;
+  }
+
+  .sidebar-title {
+    font-size: 9px; font-weight: 500; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--gold);
+    padding: 0 1.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.5rem;
+  }
+
+  .region-btn {
+    width: 100%;
+    background: none; border: none;
+    padding: 0.9rem 1.75rem;
+    display: flex; align-items: center; gap: 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    text-align: left;
+    border-left: 3px solid transparent;
+  }
+  .region-btn:hover { background: rgba(168,137,90,0.06); }
+  .region-btn.active {
+    background: rgba(107,26,42,0.06);
+    border-left-color: var(--bordeaux);
+  }
+  .region-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .region-btn-text { flex: 1; }
+  .region-btn-name { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 400; color: var(--bordeaux-dark); display: block; }
+  .region-btn-count { font-size: 10px; letter-spacing: 0.1em; color: var(--text-light); }
+  .region-btn.active .region-btn-name { color: var(--bordeaux); }
+
+  /* MAIN CONTENT */
+  .wine-content {
+    padding: 3rem 3.5rem;
+    overflow-y: auto;
+  }
+
+  /* FRANCE MAP SVG */
+  .map-container {
+    background: var(--ivory);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2rem;
+    margin-bottom: 3rem;
+    text-align: center;
+  }
+  .map-title { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 1.5rem; }
+
+  .france-map svg { max-width: 100%; height: auto; }
+  .map-region {
+    fill: var(--ivory);
+    stroke: var(--bordeaux);
+    stroke-width: 0.8;
+    cursor: pointer;
+    transition: fill 0.2s;
+  }
+  .map-region:hover { fill: rgba(168,137,90,0.2); }
+  .map-region.active { fill: rgba(107,26,42,0.18); stroke: var(--bordeaux); stroke-width: 1.5; }
+
+  /* REGION DETAIL */
+  .region-header {
+    display: flex; align-items: flex-start; gap: 1.5rem;
+    margin-bottom: 2.5rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .region-color-bar { width: 5px; border-radius: 3px; align-self: stretch; flex-shrink: 0; }
+  .region-title { font-family: 'Cormorant Garamond', serif; font-size: 2.5rem; font-weight: 300; color: var(--bordeaux-dark); line-height: 1; margin-bottom: 0.5rem; }
+  .region-subtitle { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); }
+  .region-desc { font-size: 14px; font-weight: 300; line-height: 1.85; color: var(--text-mid); margin-top: 1rem; max-width: 640px; }
+
+  /* WINE TYPES */
+  .wine-types { display: flex; gap: 0.75rem; margin-bottom: 2.5rem; flex-wrap: wrap; }
+  .wine-type-badge {
+    padding: 5px 14px; border-radius: 20px; font-size: 10px;
+    font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase;
+    border: 1px solid;
+  }
+  .badge-red { background: rgba(107,26,42,0.08); color: var(--bordeaux); border-color: rgba(107,26,42,0.2); }
+  .badge-white { background: rgba(168,137,90,0.08); color: var(--gold); border-color: rgba(168,137,90,0.3); }
+  .badge-rose { background: rgba(220,130,130,0.1); color: #9B4455; border-color: rgba(220,130,130,0.3); }
+  .badge-sparkling { background: rgba(100,130,180,0.08); color: #3A5A8A; border-color: rgba(100,130,180,0.2); }
+  .badge-sweet { background: rgba(180,150,50,0.1); color: #7A6010; border-color: rgba(180,150,50,0.25); }
+  .badge-fortified { background: rgba(80,40,10,0.08); color: #5A3010; border-color: rgba(80,40,10,0.2); }
+
+  /* APPELLATIONS */
+  .appellations-title {
+    font-size: 9px; font-weight: 500; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--gold);
+    margin-bottom: 1.25rem; display: flex; align-items: center; gap: 12px;
+  }
+  .appellations-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .appellations-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 3rem; }
+
+  .appellation-card {
+    background: var(--cream);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1.25rem 1.5rem;
+    transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+    cursor: default;
+  }
+  .appellation-card:hover {
+    border-color: var(--gold);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(168,137,90,0.1);
+  }
+  .app-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 0.6rem; }
+  .app-name { font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; font-weight: 400; color: var(--bordeaux-dark); }
+  .app-level { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-light); background: var(--ivory); padding: 2px 7px; border-radius: 10px; border: 1px solid var(--border); white-space: nowrap; }
+  .app-types { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 0.6rem; }
+  .app-type { width: 8px; height: 8px; border-radius: 50%; }
+  .app-desc { font-size: 12px; font-weight: 300; line-height: 1.7; color: var(--text-light); }
+  .app-grapes { font-size: 11px; color: var(--gold); margin-top: 0.5rem; font-style: italic; }
+
+  /* LEGEND */
+  .legend { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 2.5rem; align-items: center; }
+  .legend-title { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-light); }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-mid); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  /* WELCOME STATE */
+  .welcome-state { text-align: center; padding: 5rem 2rem; }
+  .welcome-icon { font-size: 3rem; margin-bottom: 1.5rem; opacity: 0.3; }
+  .welcome-state h3 { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 300; color: var(--bordeaux-dark); margin-bottom: 0.75rem; }
+  .welcome-state p { font-size: 14px; font-weight: 300; color: var(--text-light); }
+
+  footer { background: var(--bordeaux-dark); padding: 2rem 4rem; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid rgba(168,137,90,0.15); }
+  .footer-logo-text { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 300; color: rgba(250,247,242,0.6); letter-spacing: 0.08em; }
+  .footer-copy { font-size: 11px; color: rgba(250,247,242,0.3); }
+  .footer-tagline { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px; color: rgba(168,137,90,0.6); }
+
+  @media (max-width: 900px) {
+    nav { padding: 0 1.5rem; }
+    .nav-links { display: none; }
+    .wine-layout { grid-template-columns: 1fr; }
+    .sidebar { position: static; height: auto; overflow: visible; }
+    .wine-content { padding: 2rem 1.5rem; }
+    .page-hero { padding: 6rem 1.5rem 3rem; }
+    footer { flex-direction: column; gap: 1rem; text-align: center; padding: 2rem 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">
+    <span class="nav-logo-text">Gama Wines</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="index.html#about">Notre histoire</a></li>
+    <li><a href="index.html#what">Notre métier</a></li>
+    <li><a href="index.html#engagements">Engagements</a></li>
+    <li><a href="index.html#team">L'équipe</a></li>
+    <li><a href="index.html#clients">Clients</a></li>
+    <li><a href="carte-des-vins.html" class="active">Carte des vins</a></li>
+    <li><a href="index.html#contact" class="nav-cta">Nous contacter</a></li>
+  </ul>
+</nav>
+
+<div class="page-hero">
+  <div class="hero-tag">Notre sélection</div>
+  <h1>La carte des vins<br><em>de France</em></h1>
+  <p>Explorez les grandes régions viticoles françaises et leurs appellations</p>
+</div>
+
+<div class="wine-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-title">Régions viticoles</div>
+    <div id="regionList"></div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="wine-content" id="wineContent">
+    <div class="welcome-state">
+      <div class="welcome-icon">🍷</div>
+      <h3>Sélectionnez une région</h3>
+      <p>Cliquez sur une région dans le menu pour découvrir ses appellations et ses vins.</p>
+    </div>
+  </main>
+</div>
+
+<footer>
+  <span class="footer-logo-text">Gama Wines</span>
+  <span class="footer-tagline">« De la vigne à votre table »</span>
+  <span class="footer-copy">© 2026 Gama Wines · Tous droits réservés</span>
+</footer>
+
+<script>
+const regions = [
+  {
+    id: 'bordeaux',
+    name: 'Bordeaux',
+    color: '#6B1A2A',
+    subtitle: 'Gironde · Sud-Ouest',
+    description: 'Première région viticole de France en volume, Bordeaux est synonyme de prestige mondial. Ses châteaux, ses grands crus classés et ses appellations mythiques en font une référence incontournable. La rive gauche est dominée par le Cabernet Sauvignon, la rive droite par le Merlot.',
+    types: ['red', 'white', 'sweet', 'rose'],
+    appellations: [
+      { name: 'Pauillac', level: 'AOC', types: ['red'], desc: 'Terre des grands châteaux — Latour, Lafite, Mouton. Vins de garde majestueux.', grapes: 'Cabernet Sauvignon, Merlot' },
+      { name: 'Saint-Émilion', level: 'AOC', types: ['red'], desc: 'Village médiéval classé UNESCO. Vins riches, généreux et complexes.', grapes: 'Merlot, Cabernet Franc' },
+      { name: 'Pomerol', level: 'AOC', types: ['red'], desc: 'Petit vignoble au rayonnement mondial. Pétrus en est le joyau.', grapes: 'Merlot dominant' },
+      { name: 'Margaux', level: 'AOC', types: ['red'], desc: 'Vins féminins et élégants, aux tanins soyeux et au bouquet floral.', grapes: 'Cabernet Sauvignon, Merlot' },
+      { name: 'Saint-Julien', level: 'AOC', types: ['red'], desc: 'L\'équilibre parfait entre puissance et finesse bordelaise.', grapes: 'Cabernet Sauvignon, Merlot' },
+      { name: 'Pessac-Léognan', level: 'AOC', types: ['red', 'white'], desc: 'Blancs secs d\'exception et rouges complexes, proche de la ville.', grapes: 'Sauvignon Blanc, Sémillon, CS' },
+      { name: 'Sauternes', level: 'AOC', types: ['sweet'], desc: 'Les plus grands vins liquoreux du monde. Château d\'Yquem en tête.', grapes: 'Sémillon, Sauvignon Blanc' },
+      { name: 'Entre-Deux-Mers', level: 'AOC', types: ['white'], desc: 'Blancs secs frais et aromatiques, idéaux en apéritif.', grapes: 'Sauvignon Blanc, Sémillon' },
+    ]
+  },
+  {
+    id: 'bourgogne',
+    name: 'Bourgogne',
+    color: '#8B2A3E',
+    subtitle: 'Côte-d\'Or · Saône-et-Loire · Yonne',
+    description: 'La Bourgogne est la région du terroir par excellence. Ses "Climats" — parcelles aux personnalités uniques — sont classés au patrimoine mondial de l\'UNESCO. Chaque village, chaque lieu-dit produit un vin différent. Le Pinot Noir et le Chardonnay y atteignent leur expression la plus haute.',
+    types: ['red', 'white', 'sparkling'],
+    appellations: [
+      { name: 'Chambolle-Musigny', level: 'AOC Village', types: ['red'], desc: 'Pinots Noirs d\'une finesse et d\'une délicatesse extraordinaires.', grapes: 'Pinot Noir' },
+      { name: 'Gevrey-Chambertin', level: 'AOC Village', types: ['red'], desc: 'Vins puissants et structurés, les plus masculins de la Côte de Nuits.', grapes: 'Pinot Noir' },
+      { name: 'Vosne-Romanée', level: 'AOC Village', types: ['red'], desc: 'Village des légendes : Romanée-Conti, La Tâche, Richebourg.', grapes: 'Pinot Noir' },
+      { name: 'Meursault', level: 'AOC Village', types: ['white'], desc: 'Chardonnays beurrés et opulents, référence mondiale des blancs secs.', grapes: 'Chardonnay' },
+      { name: 'Puligny-Montrachet', level: 'AOC Village', types: ['white'], desc: 'Élégance et minéralité sublimes, des blancs d\'une pureté absolue.', grapes: 'Chardonnay' },
+      { name: 'Chablis', level: 'AOC', types: ['white'], desc: 'Blancs secs, minéraux et iodés. Le Grand Cru est une référence.', grapes: 'Chardonnay' },
+      { name: 'Mâcon', level: 'AOC', types: ['white'], desc: 'Chardonnays accessibles, fruités et ronds pour tous les jours.', grapes: 'Chardonnay' },
+      { name: 'Crémant de Bourgogne', level: 'AOC', types: ['sparkling'], desc: 'Effervescent élégant, alternative raffinée au Champagne.', grapes: 'Pinot Noir, Chardonnay' },
+    ]
+  },
+  {
+    id: 'champagne',
+    name: 'Champagne',
+    color: '#3A5A8A',
+    subtitle: 'Marne · Aube · Ardennes',
+    description: 'La Champagne produit le vin le plus célèbre du monde. Ses blancs effervescents élaborés selon la méthode champenoise — avec une seconde fermentation en bouteille — sont le symbole universel de la fête et du prestige. Les Grandes Maisons côtoient de nombreux vignerons indépendants de talent.',
+    types: ['sparkling', 'white', 'rose'],
+    appellations: [
+      { name: 'Champagne Blanc de Blancs', level: 'AOC', types: ['sparkling'], desc: '100% Chardonnay — frais, élégant, minéral et d\'une grande finesse.', grapes: 'Chardonnay' },
+      { name: 'Champagne Blanc de Noirs', level: 'AOC', types: ['sparkling'], desc: 'Vinifié en blanc à partir de raisins noirs, puissant et structuré.', grapes: 'Pinot Noir, Pinot Meunier' },
+      { name: 'Champagne Rosé', level: 'AOC', types: ['rose', 'sparkling'], desc: 'Fruité, frais et séduisant, élaboré par assemblage ou macération.', grapes: 'Pinot Noir, Chardonnay' },
+      { name: 'Champagne Millésimé', level: 'AOC', types: ['sparkling'], desc: 'Produit uniquement les meilleures années, vieilli au moins 3 ans.', grapes: 'Blend variable selon millésime' },
+      { name: 'Coteaux Champenois', level: 'AOC', types: ['red', 'white'], desc: 'Vins tranquilles rares et confidentiels de la région champenoise.', grapes: 'Pinot Noir, Chardonnay' },
+    ]
+  },
+  {
+    id: 'alsace',
+    name: 'Alsace',
+    color: '#5A7A3A',
+    subtitle: 'Bas-Rhin · Haut-Rhin',
+    description: 'L\'Alsace est la seule grande région française à étiqueter ses vins par cépage. Nichée entre les Vosges et le Rhin, elle bénéficie d\'un microclimat exceptionnel, très ensoleillé et sec. Ses vins blancs aromatiques sont parmi les plus complexes au monde. Les Grands Crus (51 au total) occupent les meilleurs terroirs.',
+    types: ['white', 'sparkling', 'sweet'],
+    appellations: [
+      { name: 'Alsace Riesling', level: 'AOC', types: ['white'], desc: 'Le roi de l\'Alsace : sec, minéral, d\'une grande pureté aromatique.', grapes: 'Riesling' },
+      { name: 'Alsace Gewurztraminer', level: 'AOC', types: ['white', 'sweet'], desc: 'Exubérant et floral — rose, litchi, épices. Inimitable.', grapes: 'Gewurztraminer' },
+      { name: 'Alsace Pinot Gris', level: 'AOC', types: ['white', 'sweet'], desc: 'Ample et généreux, entre richesse et fumé.', grapes: 'Pinot Gris' },
+      { name: 'Alsace Pinot Noir', level: 'AOC', types: ['red'], desc: 'Le seul rouge d\'Alsace — fin, fruité, aux tanins délicats.', grapes: 'Pinot Noir' },
+      { name: 'Crémant d\'Alsace', level: 'AOC', types: ['sparkling'], desc: 'Effervescent frais et élégant, très populaire en France.', grapes: 'Pinot Blanc, Auxerrois, Riesling' },
+      { name: 'Vendanges Tardives', level: 'AOC', types: ['sweet'], desc: 'Vendanges très mûres, vins moelleux d\'une richesse remarquable.', grapes: 'Riesling, Gewurztraminer, PG, Muscat' },
+      { name: 'Sélection de Grains Nobles', level: 'AOC', types: ['sweet'], desc: 'Le summum alsacien — botryтisé, liquoreux, d\'une complexité folle.', grapes: 'Gewurztraminer, Riesling, Pinot Gris' },
+    ]
+  },
+  {
+    id: 'loire',
+    name: 'Val de Loire',
+    color: '#3A7A6A',
+    subtitle: 'Maine-et-Loire · Touraine · Centre',
+    description: 'Le "Jardin de la France" s\'étend sur 1 000 km le long du fleuve Loire. Avec une diversité de styles incomparable — rouges légers, blancs secs, effervescents, moelleux et liquoreux — la Loire est la région la plus polyvalente de France. Ses vins expriment fraîcheur, pureté et minéralité.',
+    types: ['white', 'red', 'rose', 'sparkling', 'sweet'],
+    appellations: [
+      { name: 'Muscadet', level: 'AOC', types: ['white'], desc: 'Blanc sec, salin et vif. Le compagnon parfait des fruits de mer.', grapes: 'Melon de Bourgogne' },
+      { name: 'Sancerre', level: 'AOC', types: ['white', 'red', 'rose'], desc: 'Sauvignons blancs de référence mondiale — vifs, minéraux, citronnés.', grapes: 'Sauvignon Blanc, Pinot Noir' },
+      { name: 'Pouilly-Fumé', level: 'AOC', types: ['white'], desc: 'Le rival de Sancerre — fumé, minéral, d\'une grande tension.', grapes: 'Sauvignon Blanc' },
+      { name: 'Vouvray', level: 'AOC', types: ['white', 'sparkling', 'sweet'], desc: 'Du sec au liquoreux selon les années — un vin à multiples visages.', grapes: 'Chenin Blanc' },
+      { name: 'Chinon', level: 'AOC', types: ['red'], desc: 'Cabernet Franc charnu et fruité, aux notes de violette et de cassis.', grapes: 'Cabernet Franc' },
+      { name: 'Bourgueil', level: 'AOC', types: ['red'], desc: 'Cabernet Franc structuré, terreux et épicé, vieilli sur tuffeau.', grapes: 'Cabernet Franc' },
+      { name: 'Anjou', level: 'AOC', types: ['white', 'rose', 'red'], desc: 'Grande diversité de styles, du rosé tendre au rouge profond.', grapes: 'Chenin Blanc, Cabernet Franc, Grolleau' },
+      { name: 'Coteaux du Layon', level: 'AOC', types: ['sweet'], desc: 'Liquoreux de Chenin Blanc — miel, coing, abricot. Grands vieillissements.', grapes: 'Chenin Blanc' },
+      { name: 'Crémant de Loire', level: 'AOC', types: ['sparkling'], desc: 'Effervescent frais et fruité, parmi les meilleurs crémants français.', grapes: 'Chenin Blanc, Cabernet Franc' },
+    ]
+  },
+  {
+    id: 'rhone',
+    name: 'Vallée du Rhône',
+    color: '#7A3A1A',
+    subtitle: 'Rhône Nord · Rhône Sud',
+    description: 'Le couloir rhodanien offre deux mondes radicalement différents. Le Nord, escarpé et granitique, produit des vins de terroir d\'une verticalité saisissante. Le Sud, vaste et méditerranéen, offre des vins puissants, solaires et généreux. La Syrah domine au Nord, le Grenache règne au Sud.',
+    types: ['red', 'white', 'rose', 'sweet', 'fortified'],
+    appellations: [
+      { name: 'Côte-Rôtie', level: 'AOC', types: ['red'], desc: 'Syrah de référence mondiale — violette, olive noire, lard fumé. Majestueux.', grapes: 'Syrah (+ Viognier max 20%)' },
+      { name: 'Condrieu', level: 'AOC', types: ['white'], desc: 'Le Viognier dans toute sa splendeur — pêche, abricot, fleurs blanches.', grapes: 'Viognier' },
+      { name: 'Hermitage', level: 'AOC', types: ['red', 'white'], desc: 'Colosse du Rhône Nord — Syrahs de garde mythiques, blancs grandioses.', grapes: 'Syrah, Marsanne, Roussanne' },
+      { name: 'Crozes-Hermitage', level: 'AOC', types: ['red', 'white'], desc: 'L\'appellation la plus grande du Rhône Nord — accessible et qualitative.', grapes: 'Syrah, Marsanne, Roussanne' },
+      { name: 'Châteauneuf-du-Pape', level: 'AOC', types: ['red', 'white'], desc: 'Le grand seigneur du Sud — puissant, complexe, 13 cépages autorisés.', grapes: 'Grenache, Syrah, Mourvèdre, + 10' },
+      { name: 'Gigondas', level: 'AOC', types: ['red', 'rose'], desc: 'Le "petit Châteauneuf" — robuste, épicé, fruité et généreux.', grapes: 'Grenache, Syrah, Mourvèdre' },
+      { name: 'Tavel', level: 'AOC', types: ['rose'], desc: 'Le plus grand rosé de garde de France — puissant et structuré.', grapes: 'Grenache, Cinsault, Clairette' },
+      { name: 'Muscat de Beaumes-de-Venise', level: 'AOC', types: ['sweet'], desc: 'Doux naturel musqué, floral et délicieux en apéritif ou dessert.', grapes: 'Muscat Blanc à Petits Grains' },
+    ]
+  },
+  {
+    id: 'provence',
+    name: 'Provence',
+    color: '#C9A96E',
+    subtitle: 'Var · Bouches-du-Rhône · Alpes-Maritimes',
+    description: 'La Provence est la plus ancienne région viticole de France, fondée par les Grecs il y a 2 600 ans. Elle est aujourd\'hui la première région mondiale productrice de rosés de prestige. Ses vins expriment le soleil, les garrigues, la mer et un art de vivre méditerranéen inimitable.',
+    types: ['rose', 'red', 'white'],
+    appellations: [
+      { name: 'Côtes de Provence', level: 'AOC', types: ['rose', 'red', 'white'], desc: 'La plus grande appellation provençale — rosés pâles, élégants et frais.', grapes: 'Grenache, Syrah, Mourvèdre, Cinsault' },
+      { name: 'Bandol', level: 'AOC', types: ['red', 'rose', 'white'], desc: 'L\'appellation la plus prestigieuse — Mourvèdre sombre et tannique.', grapes: 'Mourvèdre dominant, Grenache' },
+      { name: 'Cassis', level: 'AOC', types: ['white', 'rose', 'red'], desc: 'Blancs minéraux et iodés, idéaux avec la bouillabaisse marseillaise.', grapes: 'Marsanne, Clairette, Ugni Blanc' },
+      { name: 'Les Baux-de-Provence', level: 'AOC', types: ['rose', 'red'], desc: 'Bio et biodynamie pionniers. Vins puissants du Massif des Alpilles.', grapes: 'Grenache, Syrah, Mourvèdre' },
+      { name: 'Palette', level: 'AOC', types: ['red', 'white', 'rose'], desc: 'Minuscule appellation près d\'Aix — Château Simone est l\'unique domaine.', grapes: 'Grenache, Mourvèdre, Clairette' },
+      { name: 'Pierrevert', level: 'AOC', types: ['rose', 'red', 'white'], desc: 'La plus haute appellation provençale, fraîcheur d\'altitude garantie.', grapes: 'Grenache, Syrah, Vermentino' },
+    ]
+  },
+  {
+    id: 'languedoc',
+    name: 'Languedoc-Roussillon',
+    color: '#9B4455',
+    subtitle: 'Hérault · Gard · Aude · Pyrénées-Orientales',
+    description: 'Le plus grand vignoble de France et du monde en superficie. Long méprisé pour ses vins de table, le Languedoc-Roussillon connaît une renaissance spectaculaire depuis les années 1990. Ses terroirs variés — garrigue, schiste, calcaire — produisent des vins sincères, généreux et d\'un rapport qualité-prix imbattable.',
+    types: ['red', 'white', 'rose', 'sweet', 'fortified'],
+    appellations: [
+      { name: 'Pic Saint-Loup', level: 'AOC', types: ['red', 'rose', 'white'], desc: 'L\'appellation la plus fraîche du Languedoc — rouges élégants et fins.', grapes: 'Syrah, Grenache, Mourvèdre' },
+      { name: 'Faugères', level: 'AOC', types: ['red', 'rose', 'white'], desc: 'Terroir de schiste unique — vins minéraux, profonds et épicés.', grapes: 'Syrah, Grenache, Mourvèdre, Carignan' },
+      { name: 'Saint-Chinian', level: 'AOC', types: ['red', 'rose', 'white'], desc: 'Garrigue et soleil — vins chaleureux aux notes d\'herbes sauvages.', grapes: 'Syrah, Grenache, Mourvèdre, Carignan' },
+      { name: 'Minervois', level: 'AOC', types: ['red', 'rose', 'white'], desc: 'Entre mer et montagne — rouges charnus, fruités et équilibrés.', grapes: 'Syrah, Grenache, Mourvèdre, Carignan' },
+      { name: 'Corbières', level: 'AOC', types: ['red', 'rose', 'white'], desc: 'Paysages sauvages et vents des Corbières — vins rustiques et authentiques.', grapes: 'Carignan, Grenache, Syrah, Mourvèdre' },
+      { name: 'Banyuls', level: 'AOC', types: ['sweet', 'fortified'], desc: 'Grenache muté sur schiste — le "Porto français" aux accents de cacao.', grapes: 'Grenache Noir dominant' },
+      { name: 'Maury', level: 'AOC', types: ['sweet', 'fortified'], desc: 'Doux naturels profonds et puissants, sur terroirs de schiste noir.', grapes: 'Grenache Noir' },
+      { name: 'Muscat de Frontignan', level: 'AOC', types: ['sweet'], desc: 'Doux naturel musqué, ensoleillé et floral. Le plus célèbre du Languedoc.', grapes: 'Muscat Blanc à Petits Grains' },
+    ]
+  },
+  {
+    id: 'sudouest',
+    name: 'Sud-Ouest',
+    color: '#5A4A1A',
+    subtitle: 'Dordogne · Lot · Tarn · Pyrénées',
+    description: 'Le Sud-Ouest est un mosaïque de vignobles aux personnalités très distinctes, dans l\'ombre de Bordeaux. Cahors, Madiran, Jurançon, Gaillac, Bergerac — chaque appellation exprime un terroir et des cépages autochtones uniques, souvent méconnus mais d\'une authenticité remarquable.',
+    types: ['red', 'white', 'sweet', 'rose'],
+    appellations: [
+      { name: 'Cahors', level: 'AOC', types: ['red'], desc: 'Le "Vin Noir" — Malbec sombre, tannique et puissant. Le meilleur du cépage.', grapes: 'Malbec (Côt) min. 70%' },
+      { name: 'Madiran', level: 'AOC', types: ['red'], desc: 'Tannat imposant, structuré, charpenté. Vins de garde authentiques.', grapes: 'Tannat min. 60%' },
+      { name: 'Jurançon', level: 'AOC', types: ['white', 'sweet'], desc: 'Blancs secs ou moelleux — exotiques, vifs, d\'une originalité folle.', grapes: 'Petit Manseng, Gros Manseng' },
+      { name: 'Bergerac', level: 'AOC', types: ['red', 'white', 'rose'], desc: 'Voisin de Bordeaux — vins accessibles aux cépages classiques bordelais.', grapes: 'Cabernet, Merlot, Sauvignon, Sémillon' },
+      { name: 'Monbazillac', level: 'AOC', types: ['sweet'], desc: 'Liquoreux botrytisé — le Sauternes du Bergeracois, accessible et sincère.', grapes: 'Sémillon, Sauvignon, Muscadelle' },
+      { name: 'Gaillac', level: 'AOC', types: ['red', 'white', 'rose', 'sparkling', 'sweet'], desc: 'L\'un des plus anciens vignobles de France — grande diversité de styles.', grapes: 'Duras, Braucol, Mauzac, Len de l\'El' },
+      { name: 'Irouléguy', level: 'AOC', types: ['red', 'white', 'rose'], desc: 'Le seul vignoble basque — vins de montagne, rustiques et authentiques.', grapes: 'Tannat, Cabernet Franc, Petit Manseng' },
+    ]
+  },
+  {
+    id: 'beaujolais',
+    name: 'Beaujolais',
+    color: '#A84A6A',
+    subtitle: 'Rhône · Saône-et-Loire',
+    description: 'Situé entre Lyon et Mâcon, le Beaujolais est le royaume du Gamay. Longtemps caricaturé par son Nouveau, il connaît une renaissance grâce à ses dix Crus — des vins de terroir complexes et de garde, qui rivalisent avec les meilleurs de Bourgogne. Les granites du Nord donnent ses plus grands vins.',
+    types: ['red', 'white', 'rose'],
+    appellations: [
+      { name: 'Moulin-à-Vent', level: 'AOC Cru', types: ['red'], desc: 'Le plus puissant des Crus — tanins, structure, vieillissement 10 ans+.', grapes: 'Gamay' },
+      { name: 'Fleurie', level: 'AOC Cru', types: ['red'], desc: 'Le plus floral — iris, pivoine, élégance féminine. Le plus populaire.', grapes: 'Gamay' },
+      { name: 'Morgon', level: 'AOC Cru', types: ['red'], desc: 'Terroir de schistes décomposés — complexe, profond, cerise kirschée.', grapes: 'Gamay' },
+      { name: 'Brouilly', level: 'AOC Cru', types: ['red'], desc: 'Le plus grand Cru en superficie — fruité, rond et accessible jeune.', grapes: 'Gamay' },
+      { name: 'Juliénas', level: 'AOC Cru', types: ['red'], desc: 'Fruité et charnu, avec du caractère — l\'un des plus anciens crus.', grapes: 'Gamay' },
+      { name: 'Saint-Amour', level: 'AOC Cru', types: ['red'], desc: 'Léger, fruité et charmeur — le plus septentrional des Crus.', grapes: 'Gamay' },
+      { name: 'Chénas', level: 'AOC Cru', types: ['red'], desc: 'Le plus rare des Crus — boisé, sauvage, proche du Moulin-à-Vent.', grapes: 'Gamay' },
+      { name: 'Chiroubles', level: 'AOC Cru', types: ['red'], desc: 'Le plus haut et le plus léger — floral, frais, à boire jeune.', grapes: 'Gamay' },
+    ]
+  },
+  {
+    id: 'jura',
+    name: 'Jura & Savoie',
+    color: '#4A6A3A',
+    subtitle: 'Jura · Savoie · Bugey',
+    description: 'Ces deux régions de montagne produisent des vins confidentiels et d\'une originalité incomparable. Le Jura est connu pour ses vins jaunes et de paille — parmi les plus rares au monde. La Savoie offre des blancs alpins d\'une fraîcheur et d\'une minéralité uniques, parfaits avec la cuisine savoyarde.',
+    types: ['white', 'red', 'sparkling', 'sweet'],
+    appellations: [
+      { name: 'Vin Jaune d\'Arbois', level: 'AOC', types: ['white'], desc: 'Élevé 6 ans sous voile — noix, curry, xérès. Un vin unique au monde.', grapes: 'Savagnin' },
+      { name: 'Château-Chalon', level: 'AOC', types: ['white'], desc: 'Le sommet du Vin Jaune — sélection rigoureuse des meilleures parcelles.', grapes: 'Savagnin' },
+      { name: 'Vin de Paille', level: 'AOC', types: ['sweet'], desc: 'Raisins passerillés sur paille — liquoreux concentré d\'une rare longueur.', grapes: 'Savagnin, Chardonnay, Poulsard' },
+      { name: 'Crémant du Jura', level: 'AOC', types: ['sparkling'], desc: 'Effervescent fin et élégant, souvent meilleur que bien des Champagnes.', grapes: 'Chardonnay, Pinot Noir, Savagnin' },
+      { name: 'Arbois Poulsard', level: 'AOC', types: ['red'], desc: 'Rouge clair, presque rosé — fin, fruité et d\'une grande buvabilité.', grapes: 'Poulsard (Ploussard)' },
+      { name: 'Apremont', level: 'AOC', types: ['white'], desc: 'Le blanc de Savoie par excellence — frais, léger, légèrement perlant.', grapes: 'Jacquère' },
+      { name: 'Roussette de Savoie', level: 'AOC', types: ['white'], desc: 'Blanc structuré et aromatique — fleurs blanches, amande, miel.', grapes: 'Altesse (Roussette)' },
+    ]
+  },
+  {
+    id: 'corse',
+    name: 'Corse',
+    color: '#2A4A2A',
+    subtitle: 'Île de Beauté',
+    description: 'L\'Île de Beauté produit des vins à l\'identité forte, ancrés dans une tradition millénaire. Le Nielluccio (clone du Sangiovese toscan) et le Sciaccarellu sont les cépages rouges emblématiques. Les blancs de Vermentinu sont parmi les plus aromatiques de France. Le patrimoine ampélographique corse est d\'une richesse unique.',
+    types: ['red', 'white', 'rose', 'sweet'],
+    appellations: [
+      { name: 'Patrimonio', level: 'AOC', types: ['red', 'white', 'rose'], desc: 'La plus ancienne AOC corse — Nielluccio puissant, blancs de Vermentinu élégants.', grapes: 'Nielluccio, Vermentinu, Grenache' },
+      { name: 'Ajaccio', level: 'AOC', types: ['red', 'white', 'rose'], desc: 'Terre du Sciaccarellu — rouge poivré et délicat, blanc gras et floral.', grapes: 'Sciaccarellu, Vermentinu, Ugni Blanc' },
+      { name: 'Muscat du Cap Corse', level: 'AOC', types: ['sweet'], desc: 'Doux naturel insulaire — floral, musqué, citronné. Un bijou rare.', grapes: 'Muscat Blanc à Petits Grains' },
+      { name: 'Vin de Corse Porto-Vecchio', level: 'AOC', types: ['red', 'white', 'rose'], desc: 'Terroir granitique du sud — vins méditerranéens au caractère insulaire.', grapes: 'Nielluccio, Sciaccarellu, Vermentinu' },
+      { name: 'Vin de Corse Figari', level: 'AOC', types: ['red', 'white', 'rose'], desc: 'Extrême sud de l\'île — vins robustes aux notes de maquis et garrigue.', grapes: 'Nielluccio, Sciaccarellu, Grenache' },
+      { name: 'Vin de Corse Calvi', level: 'AOC', types: ['red', 'white', 'rose'], desc: 'Balagne viticole — vins fruités et frais, entre mer et montagne.', grapes: 'Nielluccio, Sciaccarellu, Vermentinu' },
+    ]
+  },
+];
+
+const typeColors = {
+  red: '#7A1A2A',
+  white: '#C9A96E',
+  rose: '#D48080',
+  sparkling: '#6080A0',
+  sweet: '#B09020',
+  fortified: '#805030',
+};
+
+const typeLabels = {
+  red: 'Rouge',
+  white: 'Blanc',
+  rose: 'Rosé',
+  sparkling: 'Effervescent',
+  sweet: 'Liquoreux / Doux',
+  fortified: 'Muté / Naturel',
+};
+
+function buildSidebar() {
+  const list = document.getElementById('regionList');
+  regions.forEach((r, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'region-btn';
+    btn.dataset.id = r.id;
+    btn.innerHTML = `
+      <div class="region-dot" style="background:${r.color}"></div>
+      <div class="region-btn-text">
+        <span class="region-btn-name">${r.name}</span>
+        <span class="region-btn-count">${r.appellations.length} appellations</span>
+      </div>
+    `;
+    btn.addEventListener('click', () => showRegion(r.id));
+    list.appendChild(btn);
+  });
+}
+
+function showRegion(id) {
+  const r = regions.find(x => x.id === id);
+  if (!r) return;
+
+  document.querySelectorAll('.region-btn').forEach(b => b.classList.toggle('active', b.dataset.id === id));
+
+  const typeBadges = r.types.map(t => `<span class="wine-type-badge badge-${t}">${typeLabels[t]}</span>`).join('');
+
+  const cards = r.appellations.map(a => {
+    const dots = a.types.map(t => `<div class="app-type" style="background:${typeColors[t]}" title="${typeLabels[t]}"></div>`).join('');
+    return `
+      <div class="appellation-card">
+        <div class="app-header">
+          <span class="app-name">${a.name}</span>
+          <span class="app-level">${a.level}</span>
+        </div>
+        <div class="app-types">${dots}</div>
+        <p class="app-desc">${a.desc}</p>
+        <p class="app-grapes">🍇 ${a.grapes}</p>
+      </div>
+    `;
+  }).join('');
+
+  const legend = Object.entries(typeColors).map(([t, c]) => `
+    <div class="legend-item">
+      <div class="legend-dot" style="background:${c}"></div>
+      <span>${typeLabels[t]}</span>
+    </div>
+  `).join('');
+
+  document.getElementById('wineContent').innerHTML = `
+    <div class="region-header">
+      <div class="region-color-bar" style="background:${r.color}"></div>
+      <div>
+        <h2 class="region-title">${r.name}</h2>
+        <div class="region-subtitle">${r.subtitle}</div>
+        <p class="region-desc">${r.description}</p>
+      </div>
+    </div>
+
+    <div class="wine-types">${typeBadges}</div>
+
+    <div class="legend">
+      <span class="legend-title">Types :</span>
+      ${legend}
+    </div>
+
+    <div class="appellations-title">${r.appellations.length} appellations principales</div>
+    <div class="appellations-grid">${cards}</div>
+  `;
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+buildSidebar();
+</script>
+
+</body>
+</html>
